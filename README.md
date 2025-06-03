@@ -18,7 +18,7 @@ pip install -r requirements.txt
 
 ## Usage
 ```bash
-python zmq_streamer.py
+python zmq_image_streamer.py
 ```
 ## Configuration
 You can configure the following parameters in the script:
@@ -29,5 +29,5 @@ You can configure the following parameters in the script:
 
 ## Example
 ```bash
-python zmq_streamer.py --cam_id 1 --fps 30
+python zmq_image_streamer.py --cam_id 1 --fps 30
 ```
