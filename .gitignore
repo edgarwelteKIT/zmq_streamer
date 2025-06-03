@@ -1,4 +1,5 @@
 pycache/
+pyorbbecsdk/
 *.pyc
 *.pyo
 *.log

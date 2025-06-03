@@ -16,6 +16,11 @@ source .venv/bin/activate  # On Windows use `venv\Scripts\activate`
 pip install -r requirements.txt
 ```
 
+To use the orbbec script (which uses the orbbec SDK to capture images from an Orbbec camera), you will need to install the orbbec SDK and its Python bindings. Run the following command to install the required packages:
+```bash
+./install_orbbecsdk.sh
+```
+
 ## Usage
 
 Start the script to begin streaming video frames:
