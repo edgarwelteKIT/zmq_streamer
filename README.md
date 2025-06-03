@@ -17,9 +17,18 @@ pip install -r requirements.txt
 ```
 
 ## Usage
+
+Start the script to begin streaming video frames:
 ```bash
 python zmq_image_streamer.py
 ```
+
+Start an example script to receive and display the streamed images:
+```bash
+python zmq_image_receiver.py --ip=localhost --port=5555
+```
+
+
 ## Configuration
 You can configure the following parameters in the script:
 - `cam_id`: The index of the camera to use (default is 0).
