@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+
+# inspired by https://github.com/orbbec/pyorbbecsdk/blob/v2-main/examples/color.py
 
 import zmq
 import cv2
@@ -8,6 +9,17 @@ import argparse
 import numpy as np
 
 from pyorbbecsdk import *
+from pyorbbecsdk import VideoFrame, OBSensorType, OBFormat, OBError, Pipeline, Config, Context
+
+
+resolutions = {
+    'HD720': (1280, 720),
+    'HD960': (1280, 960),
+    'HD1080': (1920, 1080),
+    'WQHD': (2560, 1440), # no 30 fps support for WQHD
+    '4K': (3840, 2160) # no 30 fps support for 4K
+}
+
 
 def frame_to_bgr_image(frame: VideoFrame):
     width = frame.get_width()
@@ -26,22 +38,14 @@ def frame_to_bgr_image(frame: VideoFrame):
         image = cv2.cvtColor(image, cv2.COLOR_YUV2BGR_YUYV)
     elif color_format == OBFormat.MJPG:
         image = cv2.imdecode(data, cv2.IMREAD_COLOR)
-    elif color_format == OBFormat.I420:
-        image = i420_to_bgr(data, width, height)
-    elif color_format == OBFormat.NV12:
-        image = nv12_to_bgr(data, width, height)
-    elif color_format == OBFormat.NV21:
-        image = nv21_to_bgr(data, width, height)
-    elif color_format == OBFormat.UYVY:
-        image = np.resize(data, (height, width, 2))
-        image = cv2.cvtColor(image, cv2.COLOR_YUV2BGR_UYVY)
     else:
         print("Unsupported color format: {}".format(color_format))
         return None
     return image
 
 class ZMQImageOrbbecStreamer:
-    def __init__(self, port=5555, fps=30):
+    def __init__(self, resolution=(1280, 720), camera_ip=None, port=5555, fps=30):
+        self.resolution = resolution
         self.port = port
         self.fps = fps
 
@@ -52,13 +56,22 @@ class ZMQImageOrbbecStreamer:
         print(f"[Streamer] ZMQ publisher bound to tcp://*:{self.port}")
 
         # Setup Orbbec camera pipeline
-        self.pipeline = Pipeline()
+        if camera_ip is not None:
+            camera_ctx = Context()
+            device = camera_ctx.create_net_device(camera_ip, 8090)
+            if device is None:
+                print("Failed to create net device")
+                return
+
+            self.pipeline = Pipeline(device)
+        else:
+            self.pipeline = Pipeline()
         self.config = Config()
 
         try:
             profile_list = self.pipeline.get_stream_profile_list(OBSensorType.COLOR_SENSOR)
             try:
-                color_profile = profile_list.get_video_stream_profile(640, 0, OBFormat.RGB, self.fps)
+                color_profile = profile_list.get_video_stream_profile(*self.resolution, OBFormat.RGB, self.fps)
             except OBError as e:
                 print(e)
                 color_profile = profile_list.get_default_video_stream_profile()
@@ -107,9 +120,12 @@ class ZMQImageOrbbecStreamer:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="ZMQ Orbbec Image Streamer")
+    parser.add_argument('--camera_ip', type=str, default="10.9.11.10", help='IP address of the Orbbec camera (default: None for USB camera)')
     parser.add_argument('--port', type=int, default=5555, help='Port to bind the ZMQ publisher')
-    parser.add_argument('--fps', type=int, default=30, help='Frames per second to stream')
+    parser.add_argument('--fps', type=int, default=30, help='Frames per second to stream [5, 15, 25, 30]')
+    parser.add_argument('--resolution', type=str, choices=list(resolutions.keys()), default='HD1080',
+                        help='Resolution of the camera stream')
     args = parser.parse_args()
 
-    streamer = ZMQImageOrbbecStreamer(port=args.port, fps=args.fps)
+    streamer = ZMQImageOrbbecStreamer(resolution=resolutions[args.resolution], camera_ip=args.camera_ip, port=args.port, fps=args.fps)
     streamer.stream()
