@@ -19,3 +19,12 @@ mkdir -p build && cd build
 cmake -Dpybind11_DIR=$(pybind11-config --cmakedir) ..
 make -j$(nproc)
 make install
+
+
+cd ..
+pip3 install wheel
+python3 setup.py bdist_wheel
+pip3 install dist/*.whl
+
+# need to set the PYTHONPATH to include the install directory
+#export PYTHONPATH=$PYTHONPATH:$(pwd)/install/lib/
