@@ -105,8 +105,10 @@ class ZMQImageOrbbecStreamer:
 
                 # FPS Throttling
                 elapsed_time = time.time() - start_time
+                real_fps = 1.0 / elapsed_time if elapsed_time > 0 else 0
+                print(f"[Streamer] FPS: {real_fps:.2f}")
                 sleep_time = max(0, (1.0 / self.fps) - elapsed_time)
-                time.sleep(sleep_time)
+                #time.sleep(sleep_time)
         except KeyboardInterrupt:
             print("[Streamer] Interrupted by user. Exiting...")
         finally:
